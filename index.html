@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOID TEES // Vibe-Coded Drops</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #0a0a0c;
+            color: #f3f4f6;
+        }
+        .retro-font {
+            font-family: 'VT323', monospace;
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5), 0 0 20px rgba(168, 85, 247, 0.3);
+        }
+        .glow-box {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.15);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a0c;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-purple-500 selection:text-white">
+
+    <!-- HEADER / NAVIGATION -->
+    <header class="border-b border-zinc-800 bg-zinc-950/80 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3 cursor-pointer" onclick="router.navigate('shop')">
+            <span class="retro-font text-3xl tracking-wider text-purple-400 glow-text">VOID TEES_</span>
+            <span class="text-xs uppercase tracking-widest text-zinc-500 border border-zinc-800 px-2 py-0.5 rounded">v2.06</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div id="auth-nav-container">
+                <!-- Dynamically populated based on login state -->
+            </div>
+            <button onclick="toggleCart()" class="relative bg-zinc-900 border border-zinc-800 hover:border-purple-500/50 p-2.5 rounded-xl transition flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                <span id="cart-badge" class="absolute -top-2 -right-2 bg-purple-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center retro-font font-bold">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main id="app-container" class="flex-grow max-w-7xl mx-auto w-full p-6">
+        <!-- Views injected dynamically via JS router -->
+    </main>
+
+    <!-- SLIDEOUT CART DRAWER -->
+    <div id="cart-drawer" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden transition-opacity duration-300">
+        <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-zinc-950 border-l border-zinc-800 p-6 flex flex-col justify-between shadow-2xl">
+            <div>
+                <div class="flex items-center justify-between pb-4 border-b border-zinc-800">
+                    <h2 class="text-xl font-bold tracking-wider uppercase text-purple-400 flex items-center gap-2">
+                        <span>Your Stash</span>
+                        <span id="cart-count-title" class="text-xs bg-zinc-900 text-zinc-400 px-2 py-0.5 rounded border border-zinc-800">0 items</span>
+                    </h2>
+                    <button onclick="toggleCart()" class="text-zinc-500 hover:text-white transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <!-- Cart Items List -->
+                <div id="cart-items" class="mt-6 space-y-4 max-h-[55vh] overflow-y-auto pr-2">
+                    <!-- Dynamic Cart Items -->
+                </div>
+            </div>
+            <!-- Cart Footer -->
+            <div class="border-t border-zinc-800 pt-4 space-y-4">
+                <div class="flex justify-between items-center text-lg">
+                    <span class="text-zinc-400">Subtotal</span>
+                    <span id="cart-subtotal" class="font-bold text-white">$0.00</span>
+                </div>
+                <button onclick="proceedToCheckout()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-purple-600/20 uppercase tracking-widest text-sm">
+                    Proceed to Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-zinc-900 py-6 px-6 text-center text-xs text-zinc-600 tracking-wider">
+        &copy; 2026 VOID TEES. ALL RIGHTS RESERVED. VIBE CODED WITH PURE INTENT.
+    </footer>
+
+    <!-- APPLICATION LOGIC -->
+    <script>
+        // --- MOCK DATABASE & STATE ---
+        const products = [
+            { id: 1, name: "Neon Glitch Tee", price: 38.00, tag: "BESTSELLER", image: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80", desc: "Heavyweight cotton infused with cybernetic attitude." },
+            { id: 2, name: "Subdued Dystopia", price: 42.00, tag: "LIMITED", image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=600&q=80", desc: "Acid-washed oversized fit for post-midnight prowling." },
+            { id: 3, name: "Null Pointer Tee", price: 35.00, tag: "NEW", image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=600&q=80", desc: "Clean typography for those who reside in the terminal." },
+            { id: 4, name: "Cyber Blossom", price: 45.00, tag: "EXCLUSIVE", image: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?auto=format&fit=crop&w=600&q=80", desc: "Neo-Tokyo print over ultra-soft midnight fabric." },
+            { id: 5, name: "Static Noise Corp", price: 36.00, tag: "CORE", image: "https://images.unsplash.com/photo-1562157873-818bc0726f68?auto=format&fit=crop&w=600&q=80", desc: "Distressed graphic simulating analog broadcast failure." },
+            { id: 6, name: "Void Walker 01", price: 40.00, tag: "NEW", image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=600&q=80", desc: "Minimalist chest emblem with heavy back print graphic." },
+            { id: 7, name: "Kernel Panic", price: 39.00, tag: "HOT", image: "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?auto=format&fit=crop&w=600&q=80", desc: "A wearable expression of total system failure." },
+            { id: 8, name: "Sub-Zero Protocol", price: 44.00, tag: "LIMITED", image: "https://images.unsplash.com/photo-1534972195531-d756b9cfa9f2?auto=format&fit=crop&w=600&q=80", desc: "Cold gray tones featuring proprietary synthetic dyes." },
+            { id: 9, name: "Raw Material", price: 32.00, tag: "BASIC", image: "https://images.unsplash.com/photo-1581655353564-df123a1eb820?auto=format&fit=crop&w=600&q=80", desc: "Unbleached organic cotton for raw daily aesthetics." },
+            { id: 10, name: "Overclocked Icon", price: 48.00, tag: "COLLAB", image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=600&q=80", desc: "High-density puff print engineered to stand out." }
+        ];
+
+        let state = {
+            currentUser: JSON.parse(localStorage.getItem('void_tees_user')) || null,
+            cart: JSON.parse(localStorage.getItem('void_tees_cart')) || [],
+            currentView: 'shop', // 'shop', 'auth', 'checkout', 'success'
+            authMode: 'login' // 'login' or 'register'
+        };
+
+        // --- ROUTER SYSTEM ---
+        const router = {
+            navigate: function(view, mode = 'login') {
+                state.currentView = view;
+                state.authMode = mode;
+                render();
+                window.scrollTo(0, 0);
+            }
+        };
+
+        function render() {
+            renderHeaderAuth();
+            renderCartBadge();
+            const container = document.getElementById('app-container');
+            
+            switch(state.currentView) {
+                case 'shop':
+                    container.innerHTML = renderShopView();
+                    break;
+                case 'auth':
+                    container.innerHTML = renderAuthView();
+                    break;
+                case 'checkout':
+                    container.innerHTML = renderCheckoutView();
+                    break;
+                case 'success':
+                    container.innerHTML = renderSuccessView();
+                    break;
+                default:
+                    container.innerHTML = renderShopView();
+            }
+        }
+
+        // --- VIEWS ---
+
+        function renderShopView() {
+            return `
+                <div class="space-y-12">
+                    <!-- Hero Section -->
+                    <div class="relative rounded-3xl overflow-hidden border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-8 md:p-16 text-center glow-box">
+                        <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(168,85,247,0.1)_0,transparent_70%)]"></div>
+                        <div class="relative z-10 max-w-2xl mx-auto space-y-4">
+                            <span class="retro-font text-purple-400 tracking-widest text-xl uppercase bg-purple-950/40 border border-purple-800/50 px-3 py-1 rounded-full">Drop 04 // Live Now</span>
+                            <h1 class="text-4xl md:text-6xl font-bold tracking-tight text-white uppercase">VOID TEES</h1>
+                            <p class="text-zinc-400 text-sm md:text-base">Engineered for digital nomads, midnight coders, and aesthetic purists. Premium heavyweight threads.</p>
+                        </div>
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div>
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-bold tracking-wider uppercase text-white flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                                Catalog (${products.length} Items)
+                            </h2>
+                            <span class="text-xs text-zinc-500 uppercase tracking-widest">Select your armor</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                            ${products.map(product => `
+                                <div class="bg-zinc-900/50 border border-zinc-800/80 rounded-2xl overflow-hidden hover:border-purple-500/50 transition duration-300 flex flex-col justify-between group">
+                                    <div>
+                                        <div class="relative aspect-[4/5] overflow-hidden bg-zinc-950">
+                                            <img src="${product.image}" alt="${product.name}" class="object-cover w-full h-full group-hover:scale-105 transition duration-500">
+                                            <span class="absolute top-3 left-3 bg-black/70 backdrop-blur border border-zinc-800 text-purple-300 text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-md">${product.tag}</span>
+                                        </div>
+                                        <div class="p-4 space-y-1">
+                                            <h3 class="font-bold text-white text-sm truncate">${product.name}</h3>
+                                            <p class="text-xs text-zinc-400 line-clamp-2">${product.desc}</p>
+                                        </div>
+                                    </div>
+                                    <div class="p-4 pt-0 flex items-center justify-between mt-4">
+                                        <span class="font-bold text-purple-400 text-base">$${product.price.toFixed(2)}</span>
+                                        <button onclick="addToCart(${product.id})" class="bg-zinc-800 hover:bg-purple-600 text-white text-xs font-bold uppercase tracking-wider px-3.5 py-2 rounded-xl transition duration-200">
+                                            + Add
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAuthView() {
+            const isLogin = state.authMode === 'login';
+            return `
+                <div class="max-w-md mx-auto mt-12 bg-zinc-900/50 border border-zinc-800 p-8 rounded-3xl glow-box">
+                    <div class="text-center space-y-2 mb-8">
+                        <span class="retro-font text-purple-400 text-2xl tracking-widest uppercase">VOID_ACCESS</span>
+                        <h2 class="text-xl font-bold text-white">${isLogin ? 'Welcome Back, Operative' : 'Initialize New Account'}</h2>
+                        <p class="text-xs text-zinc-400">${isLogin ? 'Enter your credentials to access your saved drops.' : 'Join the network to track orders and save drops.'}</p>
+                    </div>
+
+                    <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                        ${!isLogin ? `
+                            <div>
+                                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1">Codename / Name</label>
+                                <input type="text" id="auth-name" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition">
+                            </div>
+                        ` : ''}
+                        <div>
+                            <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1">Email Address</label>
+                            <input type="email" id="auth-email" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="name@domain.com">
+                        </div>
+                        <div>
+                            <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1">Passkey</label>
+                            <input type="password" id="auth-password" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-purple-500 transition" placeholder="••••••••">
+                        </div>
+                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-xl transition uppercase tracking-widest text-sm shadow-lg shadow-purple-600/20 mt-2">
+                            ${isLogin ? 'Sign In' : 'Create Account'}
+                        </button>
+                    </form>
+
+                    <div class="mt-6 text-center text-xs text-zinc-500">
+                        ${isLogin ? "Don't have an account yet?" : "Already registered in the network?"}
+                        <button onclick="router.navigate('auth', '${isLogin ? 'register' : 'login'}')" class="text-purple-400 hover:underline ml-1 font-bold">
+                            ${isLogin ? 'Register here' : 'Sign in'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCheckoutView() {
+            if (state.cart.length === 0) {
+                return `
+                    <div class="text-center py-20 space-y-4">
+                        <h2 class="text-2xl font-bold text-white">Your Cart is Empty</h2>
+                        <p class="text-zinc-400 text-sm">Add some threads before attempting cashout.</p>
+                        <button onclick="router.navigate('shop')" class="bg-purple-600 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest">Return to Shop</button>
+                    </div>
+                `;
+            }
+
+            const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const shipping = 5.00;
+            const total = subtotal + shipping;
+
+            return `
+                <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 mt-6">
+                    <!-- Form Section -->
+                    <div class="bg-zinc-900/50 border border-zinc-800 p-8 rounded-3xl space-y-6">
+                        <div>
+                            <span class="retro-font text-purple-400 text-xl uppercase">CASHOUT // SECURE</span>
+                            <h2 class="text-lg font-bold text-white mt-1">Shipping & Payment Details</h2>
+                        </div>
+                        <form onsubmit="handleCashoutSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1">Full Name</label>
+                                <input type="text" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" value="${state.currentUser ? state.currentUser.name : ''}">
+                            </div>
+                            <div>
+                                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1">Shipping Address</label>
+                                <input type="text" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500" placeholder="Sector 7, Neo-Street 404">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1">City</label>
+                                    <input type="text" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1">Postal Code</label>
+                                    <input type="text" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs uppercase tracking-wider text-zinc-400 mb-1">Card Number (Simulated)</label>
+                                <input type="text" required placeholder="4242 •••• •••• 4242" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-purple-500">
+                            </div>
+                            <button type="submit" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-xl transition uppercase tracking-widest text-sm shadow-lg shadow-purple-600/20 mt-4">
+                                Complete Order ($${total.toFixed(2)})
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Summary Section -->
+                    <div class="bg-zinc-900/30 border border-zinc-800/80 p-8 rounded-3xl space-y-6 flex flex-col justify-between">
+                        <div class="space-y-4">
+                            <h3 class="font-bold text-white uppercase tracking-wider text-sm border-b border-zinc-800 pb-3">Order Overview</h3>
+                            <div class="space-y-3 max-h-[40vh] overflow-y-auto pr-2">
+                                ${state.cart.map(item => `
+                                    <div class="flex justify-between items-center text-sm">
+                                        <div class="flex items-center space-x-3">
+                                            <img src="${item.image}" class="w-12 h-12 object-cover rounded-lg border border-zinc-800">
+                                            <div>
+                                                <p class="font-bold text-white">${item.name}</p>
+                                                <p class="text-xs text-zinc-500">Qty: ${item.quantity}</p>
+                                            </div>
+                                        </div>
+                                        <span class="text-purple-400 font-bold">$${(item.price * item.quantity).toFixed(2)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="border-t border-zinc-800 pt-4 space-y-2 text-sm">
+                            <div class="flex justify-between text-zinc-400">
+                                <span>Subtotal</span>
+                                <span>$${subtotal.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between text-zinc-400">
+                                <span>Secure Shipping</span>
+                                <span>$${shipping.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between text-white font-bold text-base pt-2 border-t border-zinc-800">
+                                <span>Total Due</span>
+                                <span class="text-purple-400">$${total.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSuccessView() {
+            return `
+                <div class="max-w-md mx-auto text-center py-16 space-y-6 bg-zinc-900/50 border border-zinc-800 p-8 rounded-3xl mt-12 glow-box">
+                    <div class="w-16 h-16 bg-purple-950 border border-purple-500 rounded-full flex items-center justify-center mx-auto text-purple-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <div class="space-y-2">
+                        <span class="retro-font text-purple-400 text-xl tracking-widest uppercase">TRANSACTION SECURED</span>
+                        <h2 class="text-2xl font-bold text-white">Order Successfully Dispatched</h2>
+                        <p class="text-zinc-400 text-xs">Your package has been queued for fulfillment. Tracking details have been logged to your account.</p>
+                    </div>
+                    <button onclick="resetAndReturnHome()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3.5 rounded-xl transition uppercase tracking-widest text-sm">
+                        Return to Storefront
+                    </button>
+                </div>
+            `;
+        }
+
+        // --- COMPONENTS LOGIC & HELPERS ---
+
+        function renderHeaderAuth() {
+            const container = document.getElementById('auth-nav-container');
+            if (state.currentUser) {
+                container.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs text-zinc-400 hidden sm:inline">Operative: <strong class="text-purple-300">${state.currentUser.name}</strong></span>
+                        <button onclick="handleLogout()" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 px-3 py-2 rounded-xl transition uppercase tracking-wider font-bold">
+                            Logout
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <button onclick="router.navigate('auth', 'login')" class="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs text-zinc-300 px-3.5 py-2 rounded-xl transition uppercase tracking-wider font-bold">
+                            Login
+                        </button>
+                        <button onclick="router.navigate('auth', 'register')" class="bg-purple-600 hover:bg-purple-500 text-xs text-white px-3.5 py-2 rounded-xl transition uppercase tracking-wider font-bold shadow-lg shadow-purple-600/20">
+                            Register
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderCartBadge() {
+            const totalCount = state.cart.reduce((sum, item) => sum + item.quantity, 0);
+            document.getElementById('cart-badge').innerText = totalCount;
+            document.getElementById('cart-count-title').innerText = `${totalCount} items`;
+
+            // Populate cart drawer items
+            const cartItemsContainer = document.getElementById('cart-items');
+            const subtotalEl = document.getElementById('cart-subtotal');
+            const subtotal = state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            
+            subtotalEl.innerText = `$${subtotal.toFixed(2)}`;
+
+            if (state.cart.length === 0) {
+                cartItemsContainer.innerHTML = `<p class="text-center text-zinc-500 text-xs py-8 tracking-widest uppercase">Stash is currently empty</p>`;
+                return;
+            }
+
+            cartItemsContainer.innerHTML = state.cart.map(item => `
+                <div class="flex items-center justify-between bg-zinc-900/50 border border-zinc-800 p-3 rounded-2xl">
+                    <div class="flex items-center space-x-3">
+                        <img src="${item.image}" alt="${item.name}" class="w-14 h-14 object-cover rounded-xl border border-zinc-800">
+                        <div>
+                            <h4 class="font-bold text-white text-sm">${item.name}</h4>
+                            <p class="text-purple-400 font-bold text-xs">$${item.price.toFixed(2)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="updateQuantity(${item.id}, -1)" class="w-7 h-7 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-white text-xs">-</button>
+                        <span class="text-xs font-bold text-white w-4 text-center">${item.quantity}</span>
+                        <button onclick="updateQuantity(${item.id}, 1)" class="w-7 h-7 bg-zinc-800 hover:bg-zinc-700 rounded-lg flex items-center justify-center text-white text-xs">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function toggleCart() {
+            const drawer = document.getElementById('cart-drawer');
+            drawer.classList.toggle('hidden');
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existing = state.cart.find(item => item.id === productId);
+
+            if (existing) {
+                existing.quantity += 1;
+            } else {
+                state.cart.push({ ...product, quantity: 1 });
+            }
+
+            saveCartState();
+            renderCartBadge();
+            toggleCart(); // Open cart to show user action feedback
+        }
+
+        function updateQuantity(productId, delta) {
+            const item = state.cart.find(i => i.id === productId);
+            if (!item) return;
+
+            item.quantity += delta;
+            if (item.quantity <= 0) {
+                state.cart = state.cart.filter(i => i.id !== productId);
+            }
+
+            saveCartState();
+            renderCartBadge();
+        }
+
+        function saveCartState() {
+            localStorage.setItem('void_tees_cart', JSON.stringify(state.cart));
+        }
+
+        function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const nameInput = document.getElementById('auth-name');
+            const name = nameInput ? nameInput.value : email.split('@')[0];
+
+            state.currentUser = { name, email };
+            localStorage.setItem('void_tees_user', JSON.stringify(state.currentUser));
+            
+            router.navigate('shop');
+        }
+
+        function handleLogout() {
+            state.currentUser = null;
+            localStorage.removeItem('void_tees_user');
+            render();
+        }
+
+        function proceedToCheckout() {
+            toggleCart();
+            router.navigate('checkout');
+        }
+
+        function handleCashoutSubmit(e) {
+            e.preventDefault();
+            state.cart = [];
+            saveCartState();
+            router.navigate('success');
+        }
+
+        function resetAndReturnHome() {
+            router.navigate('shop');
+        }
+
+        // --- INITIALIZE APP ---
+        render();
+    </script>
+</body>
+</html>
